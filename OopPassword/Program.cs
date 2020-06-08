@@ -10,6 +10,11 @@ namespace OopPassword
     {
         static void Main(string[] args)
         {
+            Password testpassword;
+            var passwordInput = Console.ReadLine();
+
+            testpassword = new Password(passwordInput);
+
         }
     }
 }
