@@ -10,11 +10,14 @@ namespace OopPassword
     {
         static void Main(string[] args)
         {
-            Password testpassword;
-            var passwordInput = Console.ReadLine();
+            while (true)
+            {
+                Password testpassword;
+                StringBuilder passwordInput = new StringBuilder(")^!344h3)y");
+                //passwordInput.Append(Console.ReadLine());
 
-            testpassword = new Password(passwordInput);
-
+                testpassword = new Password();
+            }
         }
     }
 }

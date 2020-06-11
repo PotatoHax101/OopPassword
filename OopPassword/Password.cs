@@ -8,31 +8,75 @@ namespace OopPassword
 {
     class Password
     {
-        public Password(string userInputPassword) //Constructor for user input password
+        private readonly int[] specialCharacters = { 33, 36, 37, 94, 38, 42, 40, 41, 45, 95, 61, 43 };
+
+        //Constructor for user input password
+        public Password(StringBuilder userInputPassword) 
         {
-            int score;
-
-            score = caseScore(userInputPassword, 90, 65);
-
-            Console.WriteLine(score);
-            Console.ReadLine();
-
-            //score = CalculatePassword(userInputPassword);
-            //Result(userInputPassword, score);
+            int score = CalculatePassword(userInputPassword);
+            string strength = strengthCheck(score);
+            Result(userInputPassword, score, strength);
         }
 
-        Password() //Constructor for generating password
+        //Constructor for generating password
+        public Password() 
         {
             StringBuilder generatedPassword = new StringBuilder();
-            generatedPassword = GeneratePassword();
+
+            string strength = "";
+            int score = 0;
+
+            generatedPassword = GeneratePassword(ref score, strength);
+
+            Result(generatedPassword, score, strength);
         }
 
-        public StringBuilder GeneratePassword()
+        public StringBuilder GeneratePassword(ref int score, string strength)
         {
-            throw new NotImplementedException();
+            StringBuilder createdPassword = new StringBuilder();
+
+            Random random = new Random();
+            int length = random.Next(8, 13); // Generate rand# between 8 - 12
+            int randomSelection = 0;
+            char randomCharacter = ' ';
+
+            do
+            {
+                createdPassword.Clear();
+                //Chose random character from array of allowed ascii characters
+                for (int i = 0; i < length; i++)
+                {
+                    randomSelection = random.Next(0, 4);
+
+                    switch (randomSelection)
+                    {
+                        case 0:
+                            randomCharacter = (char)random.Next('A', 'Z' + 1);
+                            break;
+                        case 1:
+                            randomCharacter = (char)random.Next('a', 'z' + 1);
+                            break;
+                        case 2:
+                            randomCharacter = (char)random.Next('0', '9' + 1);
+                            break;
+                        case 3:
+                            randomCharacter = (char)(specialCharacters[random.Next(0, specialCharacters.Length)]);
+                            break;
+                    }
+
+                    createdPassword.Append(randomCharacter);
+                }
+
+
+                score = CalculatePassword(createdPassword);
+                strength = strengthCheck(score);
+
+            } while (strength != "Strong");
+
+            return createdPassword;
         }
 
-        public int CalculatePassword(string password)
+        public int CalculatePassword(StringBuilder password)
         {
             int score = 0;
             int[] scoreArray = new int[6];
@@ -40,25 +84,29 @@ namespace OopPassword
             string[] qwertyKeyboard = { "qwertyuiop", "asdfghjkl", "zxcvbnm" };
 
             scoreArray[0] = password.Length; //Length of password
-            scoreArray[1] = caseScore(password, 122, 97); //Lowercase letters
-            scoreArray[2] = caseScore(password, 90, 65); //Uppercase letters
-            scoreArray[3] = digitScore(password);
-            scoreArray[4] = symbolScore(password);
+            scoreArray[1] = asciiBoundScore(password, 122, 97); //Lowercase letters
+            scoreArray[2] = asciiBoundScore(password, 90, 65); //Uppercase letters
+            scoreArray[3] = asciiBoundScore(password, 57, 48); //Digits
+            scoreArray[4] = symbolScore(password, specialCharacters);
             scoreArray[5] = qwertyPenalty(password, qwertyKeyboard);
 
-            if (scoreArray[1] != 0 & scoreArray[2] != 0 & scoreArray[3] != 0 & scoreArray[4] != 0) //There are lower and upper case letters, digits, and symbols
+            //There are lower and upper case letters, digits, and symbols
+            if (scoreArray[1] != 0 & scoreArray[2] != 0 & scoreArray[3] != 0 & scoreArray[4] != 0)
             {
                 score += 10;
             }
-            else if (scoreArray[1] != 0 & scoreArray[2] != 0 & scoreArray[3] == 0 & scoreArray[4] == 0) //There are lower and upper case letters; no digits or symbols
+            //There are lower and upper case letters; no digits or symbols
+            else if (scoreArray[1] != 0 & scoreArray[2] != 0 & scoreArray[3] == 0 & scoreArray[4] == 0)
             {
                 score -= 5;
             }
-            else if (scoreArray[1] == 0 & scoreArray[2] == 0 & scoreArray[3] != 0 & scoreArray[4] == 0) //There are digits; no upper/lower case characters, or symbols
+            //There are digits; no upper/lower case characters, or symbols
+            else if (scoreArray[1] == 0 & scoreArray[2] == 0 & scoreArray[3] != 0 & scoreArray[4] == 0)
             {
                 score -= 5;
             }
-
+            
+            //Adding score together
             for (int i = 0; i < scoreArray.Length; i++)
             {
                 score += scoreArray[i];
@@ -67,11 +115,13 @@ namespace OopPassword
             return score;
         }
 
-        private int caseScore(string password, int upperBound, int lowerBound) //Upper and lower bound represent the selection of ascii characters to look for
+        //Upper and lower bound represent the selection of ascii characters to look for
+        private int asciiBoundScore(StringBuilder password, int upperBound, int lowerBound)
         {
             int localScore = 0;
             int stringIndex;
 
+            //Checks each character for a match
             for (int i = 0; i < password.Length; i++)
             {
                 stringIndex = password[i];
@@ -85,43 +135,63 @@ namespace OopPassword
             return localScore;
         }
 
-        private int digitScore(string password)
+        private int symbolScore(StringBuilder password, int[] specialCharacters)
         {
-            
+            int localScore = 0;
+            int stringIndex;
 
-            throw new NotImplementedException();
+            for (int i = 0; i < password.Length; i++)
+            {
+                stringIndex = password[i];
+                for (int j = 0; j < specialCharacters.Length; j++)
+                {
+                    if (stringIndex == specialCharacters[j])
+                    {
+                        localScore += 5;
+                        return localScore;
+                    }
+                }
+            }
+
+            return localScore;
         }
 
-        private int symbolScore(string password)
-        {
-            throw new NotImplementedException();
-        }
-
-        private int qwertyPenalty (string password, string[] qwertyKeyboard) //Please note, I apolgoise greatly for the quadruple nested for-loop
+        private int qwertyPenalty (StringBuilder password, string[] qwertyKeyboard) //Please note: I apolgoise greatly for the quadruple nested for-loop
         {
             int penaltyScore = 0;
             char currentChar;
-            StringBuilder consecutiveChars = new StringBuilder();
+            StringBuilder consecutiveChars = new StringBuilder(); //Using stringbuilder as it's better for iteration
             StringBuilder consecutiveQWERTY = new StringBuilder();
 
-            for (int i = 0; i < password.Length; i++) //Iterating on the number of characters
+            //Iterating on the number of characters
+            for (int i = 0; i < password.Length; i++)
             {
                 currentChar = password[i];
-                for (int row = 0; row < 3; row++) //Iterating through the three alphabetical rows of the keyboard
-                {
-                    for (int t = 0; t < qwertyKeyboard[row].Length; t++) //Iterating through the characters of each
-                    {
-                        if (qwertyKeyboard[row][t] == currentChar) //If the current character = the character in the qwertyKeyboard array
-                        {
-                            for (int g = 0; g < 3; g++) //Getting two consecutive characters from the currentChar in the Password string, and quertyKeyboard[row] string
-                            {
-                                consecutiveChars.Append(password[i + g]); //Gets the next two characters after password[i]
-                                consecutiveQWERTY.Append(qwertyKeyboard[row][t + g]); //Gets the next two characters after qwertyKeyboard[row][t]
 
-                                if (consecutiveChars == consecutiveQWERTY) //If the characters after password[i] and qwertyKeyboard[row][t] match, a pattern has been found
+                //Iterating through the three alphabetical rows of the keyboard
+                for (int row = 0; row < 3; row++)
+                {
+                    //Iterating through the characters of each
+                    for (int t = 0; t < qwertyKeyboard[row].Length; t++)
+                    {
+                        //If the current character = the character in the qwertyKeyboard array
+                        if (qwertyKeyboard[row][t] == currentChar)
+                        {
+                            //Getting two consecutive characters from the currentChar in the Password string, and qwertyKeyboard[row] string
+                            for (int g = 0; g < 3; g++)
+                            { 
+                                if ((i + g) < password.Length & (t + g) < qwertyKeyboard[row].Length)
                                 {
-                                    penaltyScore -= 5;
+                                    //Gets the next two characters after password[i]
+                                    consecutiveChars.Append(Char.ToLower(password[i + g]));
+                                    //Gets the next two characters after qwertyKeyboard[row][t]
+                                    consecutiveQWERTY.Append(Char.ToLower(qwertyKeyboard[row][t + g]));
                                 }
+                            }
+                            //If the characters after password[i] and qwertyKeyboard[row][t] match, a pattern has been found
+                            if (consecutiveChars.Equals(consecutiveQWERTY) == true)
+                            {
+                                penaltyScore -= 5;
                             }
                             consecutiveChars.Clear();
                             consecutiveQWERTY.Clear();
@@ -133,9 +203,35 @@ namespace OopPassword
             return penaltyScore;
         }
 
-        public void Result(string password, int score)
+        private string strengthCheck(int score)
         {
+            string strength;
 
+            if (score >= 20)
+            {
+                strength = "Strong";
+            }
+            else if (score < 20 & score >= 0)
+            {
+                strength = "Medium";
+            }
+            else
+            {
+                strength = "Weak";
+            }
+
+            return strength;
+        }
+
+        public void Result(StringBuilder password, int score, string passwordStrength)
+        {
+            passwordStrength = strengthCheck(score);
+
+            Console.WriteLine($"Grading the password '{password}'");
+            Console.WriteLine($"Password Score: {score}");
+            Console.WriteLine($"Password Strength: {passwordStrength}");
+
+            Console.ReadLine();
         }
     }
 }
