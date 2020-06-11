@@ -13,30 +13,32 @@ namespace OopPassword
         //Constructor for user input password
         public Password(StringBuilder userInputPassword) 
         {
-            int score = CalculatePassword(userInputPassword);
+            int score = calculatePassword(userInputPassword);
             string strength = strengthCheck(score);
-            Result(userInputPassword, score, strength);
+            result(userInputPassword, score, strength);
         }
 
         //Constructor for generating password
         public Password() 
         {
+            //Stringbuilder is used best for iteration
             StringBuilder generatedPassword = new StringBuilder();
 
             string strength = "";
             int score = 0;
 
-            generatedPassword = GeneratePassword(ref score, strength);
+            //Get score byref as int uses byval by default, and the score needs to update it's value for output
+            generatedPassword = generatePassword(ref score, strength);
 
-            Result(generatedPassword, score, strength);
+            result(generatedPassword, score, strength);
         }
 
-        public StringBuilder GeneratePassword(ref int score, string strength)
+        private StringBuilder generatePassword(ref int score, string strength)
         {
             StringBuilder createdPassword = new StringBuilder();
 
             Random random = new Random();
-            int length = random.Next(8, 13); // Generate rand# between 8 - 12
+            int length = random.Next(8, 13); //Generate random # between 8 - 12
             int randomSelection = 0;
             char randomCharacter = ' ';
 
@@ -48,19 +50,22 @@ namespace OopPassword
                 {
                     randomSelection = random.Next(0, 4);
 
+                    //Use switch to define the character that will be assigned to the password
+                    //The case is chosen based on the random number generator (between 0 and 3)
+                    //Switch statement is within the centre of forloop to make sure randomcharacter is defined before being assigned
                     switch (randomSelection)
                     {
                         case 0:
-                            randomCharacter = (char)random.Next('A', 'Z' + 1);
+                            randomCharacter = (char)random.Next('A', 'Z' + 1); //Uppercase
                             break;
                         case 1:
-                            randomCharacter = (char)random.Next('a', 'z' + 1);
+                            randomCharacter = (char)random.Next('a', 'z' + 1); //Lowercase
                             break;
                         case 2:
-                            randomCharacter = (char)random.Next('0', '9' + 1);
+                            randomCharacter = (char)random.Next('0', '9' + 1); //Digit
                             break;
                         case 3:
-                            randomCharacter = (char)(specialCharacters[random.Next(0, specialCharacters.Length)]);
+                            randomCharacter = (char)(specialCharacters[random.Next(0, specialCharacters.Length)]); //Special character
                             break;
                     }
 
@@ -68,7 +73,7 @@ namespace OopPassword
                 }
 
 
-                score = CalculatePassword(createdPassword);
+                score = calculatePassword(createdPassword);
                 strength = strengthCheck(score);
 
             } while (strength != "Strong");
@@ -76,7 +81,7 @@ namespace OopPassword
             return createdPassword;
         }
 
-        public int CalculatePassword(StringBuilder password)
+        private int calculatePassword(StringBuilder password)
         {
             int score = 0;
             int[] scoreArray = new int[6];
@@ -140,9 +145,11 @@ namespace OopPassword
             int localScore = 0;
             int stringIndex;
 
+            //For each character in the password
             for (int i = 0; i < password.Length; i++)
             {
                 stringIndex = password[i];
+                //Searches for a common character between the password and special character array
                 for (int j = 0; j < specialCharacters.Length; j++)
                 {
                     if (stringIndex == specialCharacters[j])
@@ -156,11 +163,12 @@ namespace OopPassword
             return localScore;
         }
 
-        private int qwertyPenalty (StringBuilder password, string[] qwertyKeyboard) //Please note: I apolgoise greatly for the quadruple nested for-loop
+        //Please note: I apolgoise greatly for the quadruple nested for-loop
+        private int qwertyPenalty (StringBuilder password, string[] qwertyKeyboard) 
         {
             int penaltyScore = 0;
             char currentChar;
-            StringBuilder consecutiveChars = new StringBuilder(); //Using stringbuilder as it's better for iteration
+            StringBuilder consecutiveChars = new StringBuilder();
             StringBuilder consecutiveQWERTY = new StringBuilder();
 
             //Iterating on the number of characters
@@ -180,6 +188,7 @@ namespace OopPassword
                             //Getting two consecutive characters from the currentChar in the Password string, and qwertyKeyboard[row] string
                             for (int g = 0; g < 3; g++)
                             { 
+                                //If we haven't reached the end of the index
                                 if ((i + g) < password.Length & (t + g) < qwertyKeyboard[row].Length)
                                 {
                                     //Gets the next two characters after password[i]
@@ -223,14 +232,11 @@ namespace OopPassword
             return strength;
         }
 
-        public void Result(StringBuilder password, int score, string passwordStrength)
+        private void result(StringBuilder password, int score, string passwordStrength)
         {
             passwordStrength = strengthCheck(score);
 
-            Console.WriteLine($"Grading the password '{password}'");
-            Console.WriteLine($"Password Score: {score}");
-            Console.WriteLine($"Password Strength: {passwordStrength}");
-
+            Console.WriteLine($"\nGrading the password '{password}' \nPassword Score: {score} \nPassword Strength: {passwordStrength} \nPress Enter to continue.");
             Console.ReadLine();
         }
     }
